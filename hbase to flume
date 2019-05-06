@@ -1,0 +1,96 @@
+#hbase to flume data sink
+---start hbase service.
+start-hbase.sh
+---check the service.
+jps
+Hmaster
+jps
+---create .conf file.
+-------------------------------------------------------------------------------
+####@@@@	hbase.conf	@@@@#####
+-------------------------------------------------------------------------------
+*********
+# Name the components on this agent 
+Agent1.sources = netcat-source  
+Agent1.channels = memory-channel
+Agent1.sinks = logger-sink
+
+# Describe/configure Source
+Agent1.sources.netcat-source.type = netcat
+Agent1.sources.netcat-source.bind = localhost
+Agent1.sources.netcat-source.port = 44444
+ 
+# Describe the sink
+Agent1.sinks.logger-sink.type = logger
+Agent1.sinks.logger-sink.type=hbase
+Agent1.sinks.logger-sink.table=test
+Agent1.sinks.logger-sink.columnFamily=CF1
+Agent1.sinks.logger-sink.type=org.apache.flume.sink.hbase.AsyncHBaseSink
+#Agent1.sinks.logger-sink.serializer=org.apache.flume.sink.hbase.SimpleHbaseEventSerializer
+
+# Use a channel which buffers events in memory
+Agent1.channels.memory-channel.type = memory
+Agent1.channels.memory-channel.capacity = 1000
+Agent1.channels.memory-channel.transactionCapacity = 100
+ 
+# Bind the source and sink to the channel
+Agent1.sources.netcat-source.channels = memory-channel
+Agent1.sinks.logger-sink.channel = memory-channel
+
+***********************
+**create table in hbase //table and column-family name should be same as .conf file**
+start hbase
+---hbase shell
+hbase(main):001:0>create 'test','CF1'
+0 row(s) in 1.2680 seconds
+
+hbase(main):002:0>list
+output//****
+airflow                                                                                                                                                                                                     
+emp                                                                                                                                                                                                         
+pagalpanti                                                                                                                                                                                                  
+tab1                                                                                                                                                                                                        
+test                                                                                                                                                                                                        
+user                                                                                                                                                                                                        
+6 row(s) in 0.8780 seconds
+=> ["airflow", "emp", "pagalpanti", "tab1", "test", "user"]//****
+
+open another terminal using this cmd.
+ctrl+alt+t
+
+write the flume cmd 
+flume-ng agent --conf ./conf/ -f /home/saurabh/hbase.conf -Dflume.root.logger=DEBUG,console -n Agent1
+***output
+19/05/06 13:47:43 INFO hbase.AsyncHBaseSink: callback received
+19/05/06 13:47:43 INFO hbase.AsyncHBaseSink: table found
+****
+
+open another terminal using this cmd
+ctrl+alt+t
+and type
+~$ nc localhost 44444
+>type a value or press a value to insert inthe hive table for an example
+>azmat ///then enter 
+OK	//message prompt
+
+switch the terminal where the hbase terminal open and enter
+hbase(main):003:0>scan 'test'
+***output
+ROW                                                  COLUMN+CELL                                                                                                                                            
+ default4f40bba8-2ea5-40af-96f8-6a294fb0beb8         column=CF1:pCol, timestamp=1557129647978, value=azmat                                                                                                  
+ default55f40b6d-3b20-4956-8ff6-cc60247e582e         column=CF1:pCol, timestamp=1557129629708, value=                                                                                                       
+ incRow                                              column=CF1:iCol, timestamp=1557129790964, value=\x00\x00\x00\x00\x00\x00\x00\x03                                                                       
+3 row(s) in 0.0440 seconds
+
+****
+insert the data
+
+we can insert continously data  
+
+
+
+
+
+
+
+
